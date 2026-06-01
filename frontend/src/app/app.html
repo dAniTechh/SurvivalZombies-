@@ -1,1 +1,5 @@
-<h1>¡Hola Mundo desde Angular, Dani!</h1>
+@if (!partidaIniciada) {
+    <app-login (onStartGame)="iniciarJuego($event)"></app-login>
+} @else {
+    <app-game-canvas [nombre]="nombreJugador" [skin]="skinSeleccionada"></app-game-canvas>
+}

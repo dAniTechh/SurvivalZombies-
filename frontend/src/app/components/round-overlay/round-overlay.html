@@ -1,0 +1,25 @@
+<!-- Se muestra u oculta solo si 'visible' es verdadero -->
+@if (visible) {
+    <div id="round-overlay" class="round-overlay show">
+        <div class="round-overlay-content">
+            
+            <!-- Título dinámico -->
+            <div class="round-overlay-title">
+                {{ modoGameOver ? 'GAME OVER' : 'RONDA SUPERADA' }}
+            </div>
+            
+            <!-- Si no es Game Over, muestra el temporizador -->
+            @if (!modoGameOver) {
+                <div class="round-overlay-timer">{{ countdown }}</div>
+            }
+
+            <!-- Si es Game Over, muestra el botón de reinicio -->
+            @if (modoGameOver) {
+                <button (click)="reiniciarPartida()" class="restart-btn" style="display: inline-block;">
+                    ↺ REINICIAR PARTIDA
+                </button>
+            }
+
+        </div>
+    </div>
+}

@@ -1,0 +1,45 @@
+<div id="game-container">
+
+    <!-- ── NUEVO: Notificación flotante de la Caja Mágica en Angular 17+ ── -->
+    @if (cajaNotifVisible) {
+        <div id="caja-notif" [style.color]="cajaNotifColor">
+            {{ cajaNotifTexto }}
+        </div>
+    }
+
+    <div id="ui-layer">
+        <div id="hud-top">
+            <span id="ronda-texto">RONDA 1</span>
+            <span id="zombies-texto">ZOMBIES RESTANTES: 0</span>
+        </div>
+
+        <div id="hud-bottom-left">
+            <span id="ronda-tally">I</span>
+        </div>
+
+        <div id="hud-bottom">
+            <span id="puntos-texto">$ 0</span>
+            <div id="floating-layer"></div>
+        </div>
+
+        <div id="perks-row">
+            <div class="perk" id="perk-1" data-perk="TITAN">T</div>
+            <div class="perk" id="perk-2" data-perk="QUICK_REVIVE">Q</div>
+            <div class="perk" id="perk-3" data-perk="JUGGER_NOG">J</div>
+            <div class="perk" id="perk-4" data-perk="ELECTRIC_UP">E</div>
+        </div>
+
+        <div id="blood-overlay" aria-hidden="true"></div>
+
+        <div id="pantalla-muerte" class="oculto">
+            <h1>Has Caído</h1>
+            <p>Esperando a que el equipo te reanime o termine la ronda...</p>
+        </div>
+
+        <!-- Componente cinematográfico de rondas -->
+        <app-round-overlay></app-round-overlay>
+    </div>
+
+    <!-- Canvas principal -->
+    <canvas #gameCanvas width="800" height="600" oncontextmenu="return false;"></canvas>
+</div>

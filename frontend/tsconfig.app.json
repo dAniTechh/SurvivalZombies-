@@ -4,6 +4,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "rootDir": "src", // Añadido para unificar la ruta raíz del Monorepo
     "types": [
       "node"
     ]

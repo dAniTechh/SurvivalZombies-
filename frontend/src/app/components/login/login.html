@@ -1,0 +1,52 @@
+<div id="ranking-box">
+    <h3>TOP 3 RECORD</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Nº</th>
+                <th>SUPERVIVIENTE</th>
+                <th>RONDA</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Nuevo flujo de control @for de Angular 17/18 (más rápido que *ngFor) -->
+            @for (usuario of rankingList; track usuario.id; let i = $index) {
+                <tr>
+                    <td style="color: #ff0000; font-weight: bold;">{{ i + 1 }}</td>
+                    <td>{{ usuario.nombre }}</td>
+                    <td style="text-align: right; padding-right: 10px;">{{ usuario.rondaMaxima }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="login-screen">
+    <h2>Búnker de Acceso</h2>
+    
+    <div class="auth-form">
+        <!-- Vinculados de forma bidireccional con [(ngModel)] (Pilar 3) -->
+        <input type="text" [(ngModel)]="username" placeholder="Tu nombre" required maxlength="12">
+        <input type="password" [(ngModel)]="password" placeholder="Tu contraseña" required>
+    </div>
+    
+    <div id="skin-selector">
+        @for (skin of skinOptions; track skin.file) {
+            <img [src]="skin.img" 
+                 [class.selected]="selectedSkin === skin.file" 
+                 class="skin-option" 
+                 (click)="selectSkin(skin.file)">
+        }
+    </div>
+    
+    <div class="auth-buttons">
+        <!-- Enlazados con eventos de clic con (click) (Pilar 3) -->
+        <button (click)="registrar()">REGISTRARSE</button>
+        <button (click)="login()">INICIAR SESIÓN</button>
+    </div>
+
+    <!-- Se muestra de forma reactiva gracias al nuevo @if de Angular 17+ -->
+    @if (loginExitoso) {
+        <button (click)="entrarAlMapa()" id="start-game-btn">ENTRAR AL MAPA</button>
+    }
+</div>
