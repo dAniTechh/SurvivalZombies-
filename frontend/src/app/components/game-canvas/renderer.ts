@@ -7,6 +7,7 @@ let mySessionId: string | null;
 // Elementos del DOM (Declarados como nulos al inicio)
 let rondaTallyEl: HTMLElement | null = null;
 let puntosTextoEl: HTMLElement | null = null;
+let rondaTextoEl: HTMLElement | null = null;
 let zombiesTextoEl: HTMLElement | null = null;
 let floatingLayerEl: HTMLElement | null = null;
 let bloodOverlayEl: HTMLElement | null = null;
@@ -78,6 +79,7 @@ function inicializarElementosDOM() {
     if (typeof document !== 'undefined') {
         if (!rondaTallyEl)   rondaTallyEl   = document.getElementById('ronda-tally');
         if (!puntosTextoEl)  puntosTextoEl  = document.getElementById('puntos-texto');
+        if (!rondaTextoEl)   rondaTextoEl   = document.getElementById('ronda-texto');
         if (!zombiesTextoEl) zombiesTextoEl = document.getElementById('zombies-texto');
         if (!floatingLayerEl)floatingLayerEl = document.getElementById('floating-layer');
         if (!bloodOverlayEl) bloodOverlayEl = document.getElementById('blood-overlay');
@@ -785,11 +787,18 @@ export function render(
 }
 
 function actualizarHUDDOM(mj: any) {
+    inicializarElementosDOM(); 
     if (rondaTallyEl)   rondaTallyEl.textContent   = rondaToTally(gameState.ronda);
+    if (rondaTextoEl)   rondaTextoEl.textContent   = `RONDA ${gameState.ronda || 1}`;
     if (zombiesTextoEl) zombiesTextoEl.textContent  = `ZOMBIES: ${gameState.restantes || 0}`;
     if (puntosTextoEl && mj && !mj.espectador)
         puntosTextoEl.textContent = `$ ${mj.puntos}`;
     updatePerksForPlayer(mj);
+
+    // ── PEGA ESTA LÍNEA AQUÍ (Llama a la barra de cuenta atrás en cada frame) ──
+    if (gameState && gameState.efectos) {
+        actualizarHUDPowerups(gameState.efectos);
+    }
 }
 
 function dibujarHUDCanvas(mj: any, puertaCercana: any) {
@@ -956,4 +965,90 @@ function updateBloodOverlay({ saludRestante }: any = {}) {
         bloodOverlayEl.classList.remove('danger');
         bloodOverlayEl.style.opacity = '0';
     }, 220);
+}
+
+
+// ── NUEVO: Configuración de los efectos activos del antiguo main.js ──
+const POWERUP_CFG: { [key: string]: any } = {
+    INSTA_KILL:    { icon: '☠',  color: '#CC00FF', bg: '#220033', durLabel: 'INSTA-KILL' },
+    DOUBLE_POINTS: { icon: '2×', color: '#FFD700', bg: '#1a1200', durLabel: 'DOBLE PUNTOS' },
+    DEATH_MACHINE: { icon: '⚡', color: '#FF0044', bg: '#1a0005', durLabel: 'DEATH MACHINE' },
+    FIRE_SALE:     { icon: '🔥', color: '#FF6600', bg: '#1a0800', durLabel: 'FIRE SALE' },
+};
+
+// Función para renderizar y actualizar las barritas flotantes en el DOM de forma dinámica
+function actualizarHUDPowerups(efectos: any) {
+    if (!efectos || typeof document === 'undefined') return;
+
+    let bar = document.getElementById('powerup-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'powerup-bar';
+        bar.style.cssText = `
+            position:fixed; top:55px; left:50%; transform:translateX(-50%);
+            display:flex; gap:8px; z-index:999; pointer-events:none; flex-wrap:wrap;
+            justify-content:center; max-width:600px;
+        `;
+        document.body.appendChild(bar);
+    }
+
+    const activos = [
+        { key: 'instakill',    msKey: 'instakillMs',    tipo: 'INSTA_KILL'    },
+        { key: 'doblesPuntos', msKey: 'doblesPuntosMs', tipo: 'DOUBLE_POINTS' },
+        { key: 'deathMachine', msKey: 'deathMachineMs', tipo: 'DEATH_MACHINE' },
+        { key: 'fireSale',     msKey: 'fireSaleMs',     tipo: 'FIRE_SALE'     },
+    ].filter(e => efectos[e.key]);
+
+    const vistos = new Set();
+    activos.forEach(({ key, msKey, tipo }) => {
+        vistos.add(tipo);
+        const cfg    = POWERUP_CFG[tipo];
+        const msLeft = efectos[msKey] || 0;
+        const segs   = Math.ceil(msLeft / 1000);
+        const frac   = Math.min(1, msLeft / (tipo === 'INSTA_KILL' ? 20000 : 30000));
+        const urgente = segs <= 5;
+
+        let pill = bar!.querySelector(`[data-efecto="${tipo}"]`) as HTMLElement;
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.dataset['efecto'] = tipo;
+            pill.style.cssText = `
+                display:flex; align-items:center; gap:6px;
+                background:${cfg.bg}; border:2px solid ${cfg.color};
+                border-radius:8px; padding:4px 12px; font-family:monospace;
+                font-weight:bold; font-size:13px; color:${cfg.color};
+                box-shadow:0 0 10px ${cfg.color}88; min-width:130px;
+                flex-direction:column; overflow:hidden;
+                transition: box-shadow 0.2s;
+            `;
+            pill.innerHTML = `
+                <div style="display:flex;align-items:center;gap:6px;width:100%;justify-content:space-between">
+                    <span class="pup-icon" style="font-size:16px">${cfg.icon}</span>
+                    <span class="pup-label">${cfg.durLabel}</span>
+                    <span class="pup-segs" style="opacity:0.85;font-size:12px"></span>
+                </div>
+                <div class="pup-bar-bg" style="width:100%;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin-top:2px">
+                    <div class="pup-bar-fill" style="height:100%;border-radius:2px;background:${cfg.color};transition:width 0.3s linear;box-shadow:0 0 6px ${cfg.color}"></div>
+                </div>
+            `;
+            bar!.appendChild(pill);
+        }
+
+        const segsEl = pill.querySelector('.pup-segs');
+        const fillEl = pill.querySelector('.pup-bar-fill') as HTMLElement;
+        
+        if (segsEl) segsEl.textContent  = `${segs}s`;
+        if (fillEl) fillEl.style.width = `${frac * 100}%`;
+        
+        pill.style.boxShadow = urgente
+            ? `0 0 20px ${cfg.color}cc`
+            : `0 0 10px ${cfg.color}88`;
+        if (urgente) pill.style.borderColor = '#FF4444';
+        else         pill.style.borderColor = cfg.color;
+    });
+
+    bar.querySelectorAll('[data-efecto]').forEach(el => {
+        const element = el as HTMLElement;
+        if (!vistos.has(element.dataset['efecto'])) element.remove();
+    });
 }
