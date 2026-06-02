@@ -57,6 +57,7 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
 
         this.gameSubscription = this.socketService.gameState$.subscribe(state => {
             this.gameState = state;
+             console.log("ESTADO DEL JUEGO:", state);
         });
 
         this.ngZone.runOutsideAngular(() => {
