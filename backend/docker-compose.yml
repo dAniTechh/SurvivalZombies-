@@ -1,6 +1,7 @@
 version: '3.8'
-#Servicio mysql ---
+
 services:
+  # Servicio MySQL ---
   mysql-zombies:
     image: mysql:8.0
     container_name: db_zombies
@@ -15,7 +16,7 @@ services:
       - mysql_data:/var/lib/mysql
     restart: always
 
-  #Servicio MongoDB ---
+  # Servicio MongoDB ---
   mongo-zombies:
     image: mongo:7.0
     container_name: mongo_zombies
@@ -25,6 +26,7 @@ services:
       - mongo_data:/data/db
     restart: always
 
+  # Servicio Backend (Spring Boot) ---
   zombies-app:
     build: .
     container_name: app_zombies
@@ -37,9 +39,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-zombies:3306/zombies_db?serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: zombie_user
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-zombie_password}
-      # Conexión interna de Docker para MongoDB
       SPRING_DATA_MONGODB_URI: mongodb://mongo-zombies:27017/zombies_analytics
       JWT_SECRET: U3VwZXJTZWNyZXRLZXlGb3Jab21iaWVzU2VydmVyMTIzNDU2Nzg5MEFCR0RFRkdISUpLTE1OT1BRUlNUVVZXWFla
+    restart: always
+
+  # Servicio Frontend (Angular + Nginx) ---
+  frontend-zombies:
+    build:
+      context: ../frontend  # <-- Esto le dice a Docker que salga del backend y entre al frontend
+      dockerfile: Dockerfile
+    container_name: frontend_zombies
+    ports:
+      - "4200:80" # Mapea el puerto 4200 de tu PC al 80 del servidor Nginx interno
+    depends_on:
+      - zombies-app
     restart: always
 
 volumes:
