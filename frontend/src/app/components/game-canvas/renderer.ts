@@ -89,9 +89,16 @@ function inicializarElementosDOM() {
 
 function inicializarImagenes() {
     if (typeof window !== 'undefined' && typeof Image !== 'undefined' && Object.keys(skinAssets).length === 0) {
-        imgJugador.src = 'assets/jugador.png';
-        imgZombieNormal.src = 'assets/zombie_normal.png';
-        imgZombieCorredor.src = 'assets/zombie_corredor.png';
+        
+       
+        imgJugador = new Image();
+        imgJugador.src = '/assets/jugador.png';
+
+        imgZombieNormal = new Image();
+        imgZombieNormal.src = '/assets/zombie_normal.png';
+
+        imgZombieCorredor = new Image();
+        imgZombieCorredor.src = '/assets/zombie_corredor.png';
 
         skinAssets = {
             'jugador.png': new Image(),
@@ -101,7 +108,7 @@ function inicializarImagenes() {
         };
 
         Object.keys(skinAssets).forEach(key => {
-            skinAssets[key].src = `assets/${key}`;
+            skinAssets[key].src = `/assets/${key}`;
         });
     }
 }
