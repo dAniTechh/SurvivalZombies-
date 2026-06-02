@@ -9,7 +9,7 @@ import { render, agregarTrazadorBala } from './renderer';
 @Component({
   selector: 'app-game-canvas',
   standalone: true,
-  providers: [SocketService],
+  providers: [],
   imports: [RoundOverlayComponent], // Importamos el overlay cinematográfico
   templateUrl: './game-canvas.html',
   styleUrls: ['./game-canvas.css']

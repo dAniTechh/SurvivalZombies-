@@ -1,102 +1,126 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import SockJS from 'sockjs-client';
 
-declare var SockJS: any;
-declare var Stomp: any;
+// Import dinámico para evitar que SSR/prerender intente incluir la variante node de stompjs
+// Usamos el bundle de stomp expuesto por stompjs
+const loadStompJs = async () => {
+  const mod: any = await import('stompjs/lib/stomp.js');
+  return mod;
+};
 
 @Injectable({
   providedIn: 'root'
 })
 export class SocketService {
+  private stompClient: any = null;
+  private mySessionId: string | null = null;
 
-    private stompClient: any = null;
-    private mySessionId: string | null = null;
+  private gameStateSource = new BehaviorSubject<any>({});
+  public gameState$: Observable<any> = this.gameStateSource.asObservable();
 
-    private gameStateSource = new BehaviorSubject<any>({});
-    public gameState$: Observable<any> = this.gameStateSource.asObservable();
+  private roundEventSource = new Subject<any>();
+  public roundEvent$: Observable<any> = this.roundEventSource.asObservable();
 
-    private roundEventSource = new Subject<any>();
-    public roundEvent$: Observable<any> = this.roundEventSource.asObservable();
+  private hitEventSource = new Subject<any>();
+  public hitEvent$: Observable<any> = this.hitEventSource.asObservable();
 
-    private hitEventSource = new Subject<any>();
-    public hitEvent$: Observable<any> = this.hitEventSource.asObservable();
+  constructor() {}
 
-    constructor() {}
+  public connect(nombre: string, skin: string): void {
+        // SockJS (sockjs-client) no tipa withCredentials en Options en tu versión, pero lo soporta runtime.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const socket: any = new SockJS('http://localhost:8080/nexus-zombies', undefined, { withCredentials: true } as any);
 
-    public connect(nombre: string, skin: string): void {
-        const socket = new SockJS('/nexus-zombies');
-        this.stompClient = Stomp.over(socket);
+    loadStompJs()
+      .then((mod: any) => {
+        // stompjs exporta bajo distintas rutas; intentamos localizar el factory 'over'
+        const overFn = mod?.Stomp?.over || mod?.over || mod?.default?.over;
+        if (!overFn) {
+          console.error('[ANGULAR-SOCKET] ❌ No se encontró Stomp.over en stompjs. mod=', mod);
+          return;
+        }
+
+        this.stompClient = overFn(socket);
         this.stompClient.debug = null;
 
-        const token = sessionStorage.getItem('jwtToken');
-        const headers = { 'Authorization': 'Bearer ' + token };
+        const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('jwtToken') : null;
+        const headers = { Authorization: 'Bearer ' + token };
 
-        this.stompClient.connect(headers, () => {
+        this.stompClient.connect(
+          headers,
+          () => {
             console.log('[ANGULAR-SOCKET] ✅ Conectado con éxito');
 
             this.stompClient.subscribe('/user/queue/init', (msg: any) => {
-                const payload = JSON.parse(msg.body);
-                this.mySessionId = payload.sessionId || null;
+              const payload = JSON.parse(msg.body);
+              this.mySessionId = payload.sessionId || null;
             });
 
             this.stompClient.subscribe('/topic/gamestate', (msg: any) => {
-                const state = JSON.parse(msg.body);
-                this.gameStateSource.next(state);
+              const state = JSON.parse(msg.body);
+              this.gameStateSource.next(state);
             });
 
             this.stompClient.subscribe('/topic/ronda', (msg: any) => {
-                const event = JSON.parse(msg.body);
-                this.roundEventSource.next(event);
+              const event = JSON.parse(msg.body);
+              this.roundEventSource.next(event);
             });
 
             this.stompClient.subscribe('/topic/hits', (msg: any) => {
-                this.hitEventSource.next(JSON.parse(msg.body));
+              this.hitEventSource.next(JSON.parse(msg.body));
             });
 
             this.stompClient.send('/app/join', {}, JSON.stringify({ nombre, skin }));
-
-        }, (error: any) => {
+          },
+          (error: any) => {
             console.error('[ANGULAR-SOCKET] ❌ Error de conexión:', error);
-        });
-    }
+          }
+        );
+      })
+      .catch((err) => {
+        console.error('[ANGULAR-SOCKET] ❌ No se pudo cargar stompjs:', err);
+      });
+  }
 
-    public enviarInput(keys: any): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/input', {}, JSON.stringify(keys));
-        }
+  public enviarInput(keys: any): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/input', {}, JSON.stringify(keys));
     }
+  }
 
-    public enviarSprint(sprint: boolean): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/sprint', {}, JSON.stringify({ activo: sprint }));
-        }
+  public enviarSprint(sprint: boolean): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/sprint', {}, JSON.stringify({ activo: sprint }));
     }
+  }
 
-    public enviarDisparo(zombieId: string, headshot: boolean): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/shoot', {}, JSON.stringify({ zombieId, headshot }));
-        }
+  public enviarDisparo(zombieId: string, headshot: boolean): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/shoot', {}, JSON.stringify({ zombieId, headshot }));
     }
+  }
 
-    public enviarInteraccion(): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/interact', {}, JSON.stringify({}));
-        }
+  public enviarInteraccion(): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/interact', {}, JSON.stringify({}));
     }
+  }
 
-    public enviarCambioArma(): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/switchWeapon', {}, JSON.stringify({}));
-        }
+  public enviarCambioArma(): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/switchWeapon', {}, JSON.stringify({}));
     }
+  }
 
-    public enviarReinicio(): void {
-        if (this.stompClient?.connected) {
-            this.stompClient.send('/app/restart', {}, JSON.stringify({}));
-        }
+  public enviarReinicio(): void {
+    if (this.stompClient?.connected) {
+      this.stompClient.send('/app/restart', {}, JSON.stringify({}));
     }
+  }
 
-    public isConnected(): boolean {
-        return this.stompClient?.connected || false;
-    }
+  public isConnected(): boolean {
+    return this.stompClient?.connected || false;
+  }
 }
+

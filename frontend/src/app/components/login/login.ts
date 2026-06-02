@@ -5,22 +5,18 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule], // Habilita binding [(ngModel)] y directivas
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
 export class LoginComponent implements OnInit {
 
-    // Variables de enlace (Two-way data binding)
     public username = '';
     public password = '';
     public selectedSkin = 'jugador.png';
     public loginExitoso = false;
-
-    // Lista de récords (MySQL)
     public rankingList: any[] = [];
 
-    // Evento para avisar al componente principal que empiece el juego
     @Output() onStartGame = new EventEmitter<{ nombre: string, skin: string }>();
 
     public skinOptions = [
@@ -32,6 +28,12 @@ export class LoginComponent implements OnInit {
 
     constructor() {}
 
+    // Normaliza payload para backend: backend usa Usuario.nombre y Usuario.password
+    private buildLoginPayload() {
+        return { nombre: this.username, password: this.password };
+    }
+
+
     ngOnInit(): void {
         this.cargarRanking();
     }
@@ -41,9 +43,11 @@ export class LoginComponent implements OnInit {
     }
 
     public async registrar(): Promise<void> {
-        const datos = { nombre: this.username, password: this.password };
+        const datos = this.buildLoginPayload();
+
         try {
-            const respuesta = await fetch('/api/usuarios/registro', {
+            // ── CORREGIDO: Apunta al puerto 8080 de Spring Boot ──
+            const respuesta = await fetch('http://localhost:8080/api/usuarios/registro', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
@@ -57,13 +61,16 @@ export class LoginComponent implements OnInit {
             }
         } catch (error) {
             console.error("Error de red:", error);
+            alert("No se pudo conectar con el servidor Backend.");
         }
     }
 
     public async login(): Promise<void> {
-        const datos = { nombre: this.username, password: this.password };
+        const datos = this.buildLoginPayload();
+
         try {
-            const respuesta = await fetch('/api/usuarios/login', {
+            // ── CORREGIDO: Apunta al puerto 8080 de Spring Boot ──
+            const respuesta = await fetch('http://localhost:8080/api/usuarios/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
@@ -75,12 +82,13 @@ export class LoginComponent implements OnInit {
                 sessionStorage.setItem('jugadorActual', this.username);
                 
                 alert("¡Bienvenido, " + this.username + "!");
-                this.loginExitoso = true; // Habilita el botón "Entrar al mapa"
+                this.loginExitoso = true; 
             } else {
                 alert("Credenciales incorrectas.");
             }
         } catch (error) {
             console.error("Error de login:", error);
+            alert("No se pudo conectar con el servidor Backend.");
         }
     }
 
@@ -89,13 +97,13 @@ export class LoginComponent implements OnInit {
             alert('¡Escribe tu nombre antes de empezar!');
             return;
         }
-        // Emitimos el evento hacia el AppComponent principal para arrancar el Canvas
         this.onStartGame.emit({ nombre: this.username, skin: this.selectedSkin });
     }
 
     private async cargarRanking(): Promise<void> {
         try {
-            const respuesta = await fetch('/api/usuarios/ranking');
+            // ── CORREGIDO: Apunta al puerto 8080 de Spring Boot ──
+            const respuesta = await fetch('http://localhost:8080/api/usuarios/ranking');
             if (respuesta.ok) {
                 this.rankingList = await respuesta.json();
             }

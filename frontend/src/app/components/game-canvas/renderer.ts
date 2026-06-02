@@ -1,21 +1,38 @@
-// ── ELIMINADAS LAS IMPORTACIONES ESTÁTICAS DE NETWORK.JS ──
-// Definimos variables de módulo que se sincronizarán dinámicamente en cada fotograma
+// ── VARIABLES DE MÓDULO (Se inicializarán solo en el navegador) ──
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
 let gameState: any;
 let mySessionId: string | null;
 
+// Elementos del DOM (Declarados como nulos al inicio)
+let rondaTallyEl: HTMLElement | null = null;
+let puntosTextoEl: HTMLElement | null = null;
+let zombiesTextoEl: HTMLElement | null = null;
+let floatingLayerEl: HTMLElement | null = null;
+let bloodOverlayEl: HTMLElement | null = null;
+let perkEls: Element[] = [];
+
+// Imágenes de juego
+let imgJugador!: HTMLImageElement;
+let imgZombieNormal!: HTMLImageElement;
+let imgZombieCorredor!: HTMLImageElement;
+
+let skinAssets: Record<string, HTMLImageElement> = {};
+
+
+// Canvas de Viñeta
+let vignetteCanvas!: HTMLCanvasElement;
+let vCtx!: CanvasRenderingContext2D;
+
+
 // ══════════════════════════════════════════════════════════════════════════════
-//  CONSTANTES DEL MUNDO  (deben coincidir con GameEngine.java)
+//  CONSTANTES DEL MUNDO
 // ══════════════════════════════════════════════════════════════════════════════
 const MUNDO_W = 2400;
 const MUNDO_H = 1800;
-let CAM_HALF_W = 400;   // Se calculará dinámicamente según el tamaño del canvas
-let CAM_HALF_H = 300;   // Se calculará dinámicamente según el tamaño del canvas
+let CAM_HALF_W = 400;   
+let CAM_HALF_H = 300;   
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  MAPA DE ZONAS
-// ══════════════════════════════════════════════════════════════════════════════
 const ZONAS = [
     { id:0, x:0,    y:0,    w:800,  h:600,  suelo:'#1a1c23', pared:'#2a2d38', techo:'#0d0f14', nombre:'Laboratorio'  },
     { id:1, x:800,  y:0,    w:800,  h:600,  suelo:'#22201c', pared:'#33302a', techo:'#111009', nombre:'Pasillos'     },
@@ -26,7 +43,6 @@ const ZONAS = [
     { id:6, x:800,  y:1200, w:800,  h:600,  suelo:'#22181a', pared:'#332527', techo:'#110b0d', nombre:'Generadores'  },
 ];
 
-// Obstáculos (X, Y, W, H) — mismo array que GameEngine.java
 const OBSTACULOS = [
     {x:796,  y:0,   w:8, h:220}, {x:796,  y:380, w:8, h:220},
     {x:0,    y:596, w:250,h:8},  {x:450,  y:596, w:350,h:8},
@@ -53,30 +69,58 @@ const OBSTACULOS = [
     {x:1440,y:1280,w:80,h:200},{x:950,y:1550,w:500,h:60},
 ];
 
-// ── DOM ELEMENTS (Asignados dinámicamente) ──
-const rondaTallyEl   = document.getElementById('ronda-tally');
-const puntosTextoEl  = document.getElementById('puntos-texto');
-const zombiesTextoEl = document.getElementById('zombies-texto');
-const floatingLayerEl= document.getElementById('floating-layer');
-const bloodOverlayEl = document.getElementById('blood-overlay');
-const perkEls = [...document.querySelectorAll('.perk[data-perk]')];
-
-// ── ESTADO VISUAL GLOBAL ──
 let tiempoAnim = 0;
 const manchasSangre: any[] = [];
-
-// ── TEXTURAS Y AVATARES DE ENTIDADES ──
-const imgJugador = new Image();
-imgJugador.src = 'assets/jugador.png';
-
-const imgZombieNormal = new Image();
-imgZombieNormal.src = 'assets/zombie_normal.png';
-
-const imgZombieCorredor = new Image();
-imgZombieCorredor.src = 'assets/zombie_corredor.png';
-
-// Array para guardar las balas visibles activas en pantalla
 let trazadoresBalas: any[] = [];
+
+// ── PROTECCIÓN DE ENTRADA AL DOM (Para evitar errores en Node.js) ──
+function inicializarElementosDOM() {
+    if (typeof document !== 'undefined') {
+        if (!rondaTallyEl)   rondaTallyEl   = document.getElementById('ronda-tally');
+        if (!puntosTextoEl)  puntosTextoEl  = document.getElementById('puntos-texto');
+        if (!zombiesTextoEl) zombiesTextoEl = document.getElementById('zombies-texto');
+        if (!floatingLayerEl)floatingLayerEl = document.getElementById('floating-layer');
+        if (!bloodOverlayEl) bloodOverlayEl = document.getElementById('blood-overlay');
+        if (perkEls.length === 0) {
+            perkEls = [...document.querySelectorAll('.perk[data-perk]')];
+        }
+    }
+}
+
+function inicializarImagenes() {
+    if (typeof window !== 'undefined' && typeof Image !== 'undefined' && Object.keys(skinAssets).length === 0) {
+        imgJugador.src = 'assets/jugador.png';
+        imgZombieNormal.src = 'assets/zombie_normal.png';
+        imgZombieCorredor.src = 'assets/zombie_corredor.png';
+
+        skinAssets = {
+            'jugador.png': new Image(),
+            'jugador2.png': new Image(),
+            'jugador3.png': new Image(),
+            'jugador4.png': new Image()
+        };
+
+        Object.keys(skinAssets).forEach(key => {
+            skinAssets[key].src = `assets/${key}`;
+        });
+    }
+}
+
+function inicializarVignette() {
+    if (typeof document === 'undefined') return;
+    if (!vignetteCanvas) {
+        vignetteCanvas = document.createElement('canvas');
+        vignetteCanvas.width  = 800;
+        vignetteCanvas.height = 600;
+        const tempCtx = vignetteCanvas.getContext('2d')!;
+
+        const vGrad = tempCtx.createRadialGradient(400,300,160,400,300,520);
+        vGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        vGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
+        tempCtx.fillStyle = vGrad;
+        tempCtx.fillRect(0,0,800,600);
+    }
+}
 
 export function agregarTrazadorBala(startX: number, startY: number, endX: number, endY: number) {
     trazadoresBalas.push({
@@ -88,32 +132,23 @@ export function agregarTrazadorBala(startX: number, startY: number, endX: number
     });
 }
 
-// Caché de la viñeta para no recalcular 60×/s
-const vignetteCanvas = document.createElement('canvas');
-vignetteCanvas.width  = 800;
-vignetteCanvas.height = 600;
-const vCtx = vignetteCanvas.getContext('2d')!;
-const vGrad = vCtx.createRadialGradient(400,300,160,400,300,520);
-vGrad.addColorStop(0, 'rgba(0,0,0,0)');
-vGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
-vCtx.fillStyle = vGrad;
-vCtx.fillRect(0,0,800,600);
-
 // ── EVENTOS HUD ──
-window.addEventListener('hud:kill', (ev: any) => {
-    spawnFloatingScore(ev.detail || {});
-    const mj  = gameState.jugadores?.find((j: any) => j.id === mySessionId);
-    if (mj) {
-        for (let i = 0; i < 4; i++) manchasSangre.push({
-            x: mj.x + (Math.random()*120 - 60),
-            y: mj.y + (Math.random()*120 - 60),
-            r: Math.random()*14 + 4,
-            a: Math.random()*0.45 + 0.1
-        });
-        if (manchasSangre.length > 300) manchasSangre.shift();
-    }
-});
-window.addEventListener('hud:hits', (ev: any) => updateBloodOverlay(ev.detail || {}));
+if (typeof window !== 'undefined') {
+    window.addEventListener('hud:kill', (ev: any) => {
+        spawnFloatingScore(ev.detail || {});
+        const mj  = gameState.jugadores?.find((j: any) => j.id === mySessionId);
+        if (mj) {
+            for (let i = 0; i < 4; i++) manchasSangre.push({
+                x: mj.x + (Math.random()*120 - 60),
+                y: mj.y + (Math.random()*120 - 60),
+                r: Math.random()*14 + 4,
+                a: Math.random()*0.45 + 0.1
+            });
+            if (manchasSangre.length > 300) manchasSangre.shift();
+        }
+    });
+    window.addEventListener('hud:hits', (ev: any) => updateBloodOverlay(ev.detail || {}));
+}
 
 // ── DIBUJO DEL MUNDO ──
 function dibujarMundo() {
@@ -382,18 +417,8 @@ function dibujarJugador(p: any) {
     ctx.restore();
 }
 
-const skinAssets = {
-    'jugador.png': new Image(),
-    'jugador2.png': new Image(),
-    'jugador3.png': new Image(),
-    'jugador4.png': new Image()
-};
-
-Object.keys(skinAssets).forEach(key => {
-    skinAssets[key as keyof typeof skinAssets].src = `assets/${key}`;
-});
-
 function dibujarZombie(z: any) {
+
     ctx.save();
     ctx.translate(z.x, z.y);
 
@@ -652,7 +677,6 @@ function hexAlpha(hex: string, a: number) {
     return `rgba(${r},${g},${b},${a})`;
 }
 
-// ── EXPORTACIÓN PRINCIPAL ADAPTADA A ANGULAR (BRIDGE) ──
 export function render(
     currentCanvas: HTMLCanvasElement, 
     currentCtx: CanvasRenderingContext2D, 
@@ -671,6 +695,11 @@ export function render(
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!gameState || !gameState.jugadores) return;
+
+    // ── PROTECCIÓN DE INICIALIZACIÓN DE IMÁGENES EN EL ENTORNO DE NAVEGADOR ──
+    inicializarImagenes();
+    inicializarVignette();
+    inicializarElementosDOM();
 
     const miJugador = gameState.jugadores.find((j: any) => j.id === mySessionId)
         || (gameState.jugadores.length === 1 ? gameState.jugadores[0] : null);
@@ -740,7 +769,9 @@ export function render(
 
     ctx.restore();
 
-    ctx.drawImage(vignetteCanvas, 0, 0);
+    if (vignetteCanvas) {
+        ctx.drawImage(vignetteCanvas, 0, 0);
+    }
 
     actualizarHUDDOM(miJugador);
     dibujarHUDCanvas(miJugador, puertaCercana);
@@ -762,7 +793,7 @@ function dibujarHUDCanvas(mj: any, puertaCercana: any) {
         ctx.save();
         ctx.fillStyle = 'rgba(0,0,0,0.85)';
         ctx.beginPath();
-        // @ts-ignore - Evita que el compilador de TS estricto proteste si roundRect no está indexado en tipos viejos
+        // @ts-ignore
         ctx.roundRect(bx - 160, by - 20, 320, 60, 8);
         ctx.fill();
 

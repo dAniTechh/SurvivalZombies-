@@ -17,7 +17,12 @@ describe('App', () => {
   it('should render title', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
+
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, zombies-frontend');
+    // En runtime el contenido depende del estado (partidaIniciada).
+    // Este test solo valida que exista el contenedor principal.
+    expect(compiled.querySelector('app-login, app-game-canvas')).toBeTruthy();
+
   });
 });
+

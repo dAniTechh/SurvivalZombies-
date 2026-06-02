@@ -1,17 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RoundOverlay } from './round-overlay';
+import { RoundOverlayComponent } from './round-overlay';
 
 describe('RoundOverlay', () => {
-  let component: RoundOverlay;
-  let fixture: ComponentFixture<RoundOverlay>;
+  let component: RoundOverlayComponent;
+  let fixture: ComponentFixture<RoundOverlayComponent>;
+
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RoundOverlay],
+      imports: [RoundOverlayComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RoundOverlay);
+    fixture = TestBed.createComponent(RoundOverlayComponent);
+
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
