@@ -3,7 +3,6 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import SockJS from 'sockjs-client';
 
 // Import dinámico para evitar que SSR/prerender intente incluir la variante node de stompjs
-// Usamos el bundle de stomp expuesto por stompjs
 const loadStompJs = async () => {
   const mod: any = await import('stompjs/lib/stomp.js');
   return mod;
@@ -28,21 +27,20 @@ export class SocketService {
   constructor() {}
 
   public connect(nombre: string, skin: string): void {
-        // SockJS (sockjs-client) no tipa withCredentials en Options en tu versión, pero lo soporta runtime.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const socket: any = new SockJS('http://localhost:8080/nexus-zombies', undefined, { withCredentials: true } as any);
+    // 1. Apuntamos a localhost para que el navegador de Windows lo encuentre
+    const socketUrl = 'http://localhost:8080/nexus-zombies';
+    const socket: any = new SockJS(socketUrl, undefined, {} as any);
 
     loadStompJs()
       .then((mod: any) => {
-        // stompjs exporta bajo distintas rutas; intentamos localizar el factory 'over'
-        const overFn = mod?.Stomp?.over || mod?.over || mod?.default?.over;
-        if (!overFn) {
-          console.error('[ANGULAR-SOCKET] ❌ No se encontró Stomp.over en stompjs. mod=', mod);
+        const overFn: any = mod?.over || mod?.Stomp?.over || mod?.default?.over || mod?.default?.Stomp?.over;
+        if (typeof overFn !== 'function') {
+          console.error('[ANGULAR-SOCKET] ❌ No se encontró Stomp.over en stompjs. mod keys=', Object.keys(mod || {}), 'mod=', mod);
           return;
         }
 
+        // 2. Inicializamos el cliente STOMP
         this.stompClient = overFn(socket);
-        this.stompClient.debug = null;
 
         const token = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('jwtToken') : null;
         const headers = { Authorization: 'Bearer ' + token };
@@ -123,4 +121,3 @@ export class SocketService {
     return this.stompClient?.connected || false;
   }
 }
-

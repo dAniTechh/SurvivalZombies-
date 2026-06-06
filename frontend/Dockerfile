@@ -1,5 +1,5 @@
-# ETAPA 1: Construcción de Angular
-FROM node:18-alpine AS build
+# ETAPA 1: Construcción de Angular (Actualizado a node:20-alpine)
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -9,7 +9,7 @@ RUN npm run build --configuration=production
 # ETAPA 2: Servidor Nginx
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-# ATENCIÓN: Si tu carpeta de compilación se llama diferente, ajusta esta ruta
-COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+# Ajustado para usar el nombre correcto del proyecto: zombies-frontend
+COPY --from=build /app/dist/zombies-frontend/browser /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
