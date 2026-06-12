@@ -30,7 +30,7 @@ public class Player {
         FUSIL_ASALTO(45, 120, "Fusil de Asalto (M4)"),
         SNIPER(150, 500, "Rifle de Francotirador"),
         THUNDER(9999, 9999, "Cañón Thunder"), // 🔥 NUEVA ARMA LETAL (Instakill)
-        DESARMADO(0, 0, "Manos Vacías");      // 🔥 AÑADIDO: Para el hueco vacío del inventario
+        DESARMADO(20, 0, "Manos Vacías");      // 🔥 AÑADIDO: Para el hueco vacío del inventario
 
         public final int danoBase;
         public final int danoHeadshot;
