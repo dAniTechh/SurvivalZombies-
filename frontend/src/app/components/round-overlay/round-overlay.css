@@ -1,0 +1,89 @@
+/* =========================================
+   ROUND OVERLAY & GAME OVER
+   ========================================= */
+:root {
+    /* Variables de color para el overlay */
+    --bo1-red-blood: #8a0303; /* Rojo sangre */
+}
+/* 1. FONDOS DINÁMICOS */
+.round-overlay {
+    position: absolute;
+    inset: 0;
+    
+    /* Vuelve a ser transparente para que veas el mapa al pasar de ronda */
+    background: rgba(0, 0, 0, 0.1); 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999; 
+}
+
+.round-overlay.bg-gameover {
+    /* Este negro casi total SOLO se aplica si la partida acaba */
+    background: rgba(0, 0, 0, 0.98); 
+}
+
+/* 2. ENVOLTORIO CENTRAL (La clave para que no se vaya a la esquina) */
+.round-overlay-content {
+    /* Agrupamos título, timer y botón en una columna centrada */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* 3. TEXTOS */
+.round-overlay-title {
+    font-family: 'Black Ops One', system-ui;
+    font-size: 80px;
+    color: var(--bo1-red-blood, #8a0303); /* Rojo sangre */
+    text-transform: uppercase;
+    text-shadow: 0 0 20px #ff0000;
+    letter-spacing: 10px;
+    animation: pulse 1.5s infinite;
+}
+
+/* El temporizador justo debajo del título */
+.round-overlay-timer {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 60px;
+    color: #f4f4f4; /* Tiza blanca */
+    margin-top: 10px;
+    display: inline-block;
+    border-bottom: 3px solid #8a0303;
+}
+
+/* 4. ANIMACIONES */
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 5. BOTÓN DE REINICIAR PARTIDA (Game Over) */
+.restart-btn {
+    margin-top: 28px;
+    padding: 14px 40px;
+    font-family: 'Black Ops One', system-ui;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: #fff;
+    background: transparent;
+    border: 3px solid var(--bo1-red-blood, #8a0303);
+    cursor: pointer;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px red;
+    box-shadow: 0 0 18px rgba(180,0,0,0.5);
+    transition: background 0.15s, box-shadow 0.15s;
+}
+
+.restart-btn:hover {
+    background: rgba(180, 0, 0, 0.25);
+    box-shadow: 0 0 32px rgba(220,0,0,0.8);
+}
+
+.restart-btn:active {
+    transform: scale(0.96);
+}

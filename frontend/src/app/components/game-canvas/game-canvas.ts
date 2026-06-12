@@ -100,13 +100,13 @@ export class GameCanvasComponent implements OnInit, OnDestroy {
                 ESCOPETA:     'Escopeta de Corredera',
                 FUSIL_ASALTO: 'Fusil de Asalto M4',
                 SNIPER:       'Rifle de Francotirador',
-                THUNDER:      '⚡ Cañón Thunder',
+                THUNDER:      ' Cañón Thunder',
             };
             const nombre = NOMBRES_ARMA[p.arma] ?? p.arma;
             const esMalo  = p.arma === 'PISTOLA';
 
             this.mostrarCajaNotificacion(
-                esMalo ? `😤 Pistola... qué mala suerte` : `🎁 ¡${nombre}!`,
+                esMalo ? `😤 Pistola... qué mala suerte` : ` ¡${nombre}!`,
                 esMalo ? '#e24b4a' : '#1d9e75',
                 3500
             );

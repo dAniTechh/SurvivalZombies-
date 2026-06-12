@@ -17,7 +17,7 @@ Frontend del juego **Zombies** construido con **Angular (Standalone)**. La lógi
 - [Comunicación en tiempo real (STOMP)](#comunicación-en-tiempo-real-stomp)
 - [Controles del jugador](#controles-del-jugador)
 - [Recursos estáticos](#recursos-estáticos)
-- [Notas de configuración / puntos a revisar](#notas-de-configuración--puntos-a-revisar)
+
 
 ---
 
@@ -254,24 +254,6 @@ En el renderer, las rutas se cargan con prefijo `/assets/...`.
 
 ---
 
-## Notas de configuración / puntos a revisar
-
-1. **Endpoints hardcodeados a `localhost`**
-   - El frontend utiliza explícitamente `http://localhost:8080` para login/registro/ranking.
-   - La conexión STOMP usa `http://localhost:8080/nexus-zombies`.
-   - Si se despliega a otra máquina/puerto, conviene mover esto a variables de entorno.
-
-2. **STOMP + SSR**
-   - `SocketService` carga `stompjs` de forma dinámica para evitar SSR/prerender.
-
-3. **Canvas y render loop**
-   - `GameCanvasComponent` ejecuta el loop por `requestAnimationFrame`.
-   - El estado del juego llega por `gameState$` y se dibuja en cada frame.
-
-4. **Rango de mapa y cámara**
-   - `renderer.ts` define constantes del mundo (por ejemplo `MUNDO_W=2400`, `MUNDO_H=1800`).
-
----
 
 ## Estructura de archivos (referencia rápida)
 
@@ -284,4 +266,4 @@ En el renderer, las rutas se cargan con prefijo `/assets/...`.
 
 ---
 
-Si quieres, puedo generar también una versión del README que incluya **ejemplos de payloads** (JSON) para `/app/input`, `/app/shoot`, etc., basados en el backend real.
+
